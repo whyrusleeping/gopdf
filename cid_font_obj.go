@@ -3,6 +3,7 @@ package gopdf
 import (
 	"bytes"
 	"fmt"
+	"sort"
 )
 
 type CIDFontObj struct {
@@ -29,13 +30,42 @@ func (ci *CIDFontObj) build(objID int) error {
 	ci.buffer.WriteString("/Type /Font\n")
 	characterToGlyphIndex := ci.PtrToSubsetFontObj.CharacterToGlyphIndex
 	ci.buffer.WriteString("/W [")
-	for _, v := range characterToGlyphIndex {
+
+	sortedForEachRI(characterToGlyphIndex, func(k rune, v uint) {
 		width := ci.PtrToSubsetFontObj.GlyphIndexToPdfWidth(v)
 		ci.buffer.WriteString(fmt.Sprintf("%d[%d]", v, width))
-	}
+	})
 	ci.buffer.WriteString("]\n")
 	ci.buffer.WriteString(">>\n")
 	return nil
+}
+
+func sortedForEachRI(m map[rune]uint, f func(k rune, v uint)) {
+	var keys []rune
+	for k := range m {
+		keys = append(keys, k)
+	}
+
+	sort.Slice(keys, func(i, j int) bool {
+		return keys[i] < keys[j]
+	})
+
+	for _, k := range keys {
+		f(k, m[k])
+	}
+}
+
+func sortedForEachIR(m map[int]rune, f func(k int, v rune)) {
+	var keys []int
+	for k := range m {
+		keys = append(keys, k)
+	}
+
+	sort.Ints(keys)
+
+	for _, k := range keys {
+		f(k, m[k])
+	}
 }
 
 //SetIndexObjSubfontDescriptor set  indexObjSubfontDescriptor

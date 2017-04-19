@@ -61,7 +61,7 @@ func (u *UnicodeMap) pdfToUnicodeMap(objID int) (*bytes.Buffer, error) {
 	glyphIndexToCharacter := make(map[int]rune)
 	lowIndex := 65536
 	hiIndex := -1
-	for k, v := range characterToGlyphIndex {
+	sortedForEachRI(characterToGlyphIndex, func(k rune, v uint) {
 		index := int(v)
 		if index < lowIndex {
 			lowIndex = index
@@ -70,7 +70,7 @@ func (u *UnicodeMap) pdfToUnicodeMap(objID int) (*bytes.Buffer, error) {
 			hiIndex = index
 		}
 		glyphIndexToCharacter[index] = k
-	}
+	})
 
 	var buff bytes.Buffer
 	buff.WriteString(prefix)
@@ -78,9 +78,9 @@ func (u *UnicodeMap) pdfToUnicodeMap(objID int) (*bytes.Buffer, error) {
 	buff.WriteString(fmt.Sprintf("<%04X><%04X>\n", lowIndex, hiIndex))
 	buff.WriteString("endcodespacerange\n")
 	buff.WriteString(fmt.Sprintf("%d beginbfrange\n", len(glyphIndexToCharacter)))
-	for k, v := range glyphIndexToCharacter {
+	sortedForEachIR(glyphIndexToCharacter, func(k int, v rune) {
 		buff.WriteString(fmt.Sprintf("<%04X><%04X><%04X>\n", k, k, v))
-	}
+	})
 	buff.WriteString("endbfrange\n")
 	buff.WriteString(suffix)
 	buff.WriteString("\n")
